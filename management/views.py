@@ -3,19 +3,23 @@ from django.http import HttpResponse, JsonResponse
 
 
 # Create your views here.
-def index(request):
-    data = {'hell': 111}
-    return HttpResponse("hello world")
 
 
-def test(request):
-    return HttpResponse(content="hello world", status=202)
 
 
-class apis:
+class web:
+    def test(requset):
+        return HttpResponse("This is web test", status=202)
+
     def is_online(request):
         data = {
             'status': 200,
+            'isrunning': True,
             'data': "Server is running"
         }
-        return JsonResponse(1234, safe=False)
+        return JsonResponse(data, safe=False)
+
+
+class android:
+    def test(request):
+        return HttpResponse("this is android test", status=202)

@@ -1,7 +1,7 @@
-from django.urls import path
+from django.urls import path, include
 from management import views
-from management.views import apis
+from .api_transfer import api
 
 urlpatterns = [
-    path('isonline/', apis.is_online)
+    path('', include(api))
 ]
