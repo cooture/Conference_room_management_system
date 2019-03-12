@@ -5,6 +5,9 @@ from django.http import HttpResponse, JsonResponse
 # Create your views here.
 
 
+class general:
+    def test(request):
+        return HttpResponse("This is gen test", status=202)
 
 
 class web:
@@ -13,11 +16,14 @@ class web:
 
     def is_online(request):
         data = {
-            'status': 200,
+            'status': 202,
             'isrunning': True,
             'data': "Server is running"
         }
         return JsonResponse(data, safe=False)
+
+    def static_test(request):
+        return render(request, 'web/index.html')
 
 
 class android:
