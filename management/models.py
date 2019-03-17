@@ -43,7 +43,7 @@ class meeting(models.Model):
     starttime = models.DateTimeField()
     endtime = models.DateTimeField()
     theme = models.CharField(max_length=200, null=False, blank=False, default='null')
-    comment = models.TextField(max_length=1000,null=True, blank=True, default="备注为空")
+    comment = models.TextField(max_length=1000, null=True, blank=True, default="备注为空")
     person = models.ManyToManyField(user, verbose_name="会议人员", related_name='person')
     creat_person = models.ForeignKey(user, default='null', on_delete=models.SET_DEFAULT, related_name='creat_person',
                                      null=True, blank=True, verbose_name="管理员")

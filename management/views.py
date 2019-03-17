@@ -10,31 +10,27 @@ method_key = ['1']
 
 
 def makeUserInfo(i_users):
-    user_data = {}
-    user_data['name'] = i_users.name
-    user_data['sex'] = i_users.get_sex_display()
-    user_data['email'] = i_users.email
-    user_data['phone'] = i_users.phone
-    user_data['postion'] = i_users.position
-    user_data['add_time'] = i_users.addtime
-    user_data['edit_time'] = i_users.edittime
+    user_data = {'user_id': i_users.id, 'name': i_users.name, 'sex': i_users.get_sex_display(), 'email': i_users.email,
+                 'phone': i_users.phone,
+                 'postion': i_users.position, 'add_time': i_users.addtime, 'edit_time': i_users.edittime}
     return user_data
 
 
 def makeMeetingInfo(i_meeting):
-    meeting_data = {}
-    meeting_data['theme'] = i_meeting.theme
-    meeting_data['comment'] = i_meeting.comment
-    meeting_data['start_time'] = i_meeting.starttime
-    meeting_data['end_time'] = i_meeting.endtime
-    meeting_data['creat_person'] = i_meeting.creat_person.name
-    meeting_data['creat_person_id'] = i_meeting.creat_person.id
-    meeting_data['room_name'] = i_meeting.room.name
-    meeting_data['room_name_id'] = i_meeting.room.id
+    meeting_data = {'theme': i_meeting.theme, 'comment': i_meeting.comment, 'start_time': i_meeting.starttime,
+                    'end_time': i_meeting.endtime, 'creat_person': i_meeting.creat_person.name,
+                    'creat_person_id': i_meeting.creat_person.id, 'room_name': i_meeting.room.name,
+                    'room_name_id': i_meeting.room.id}
     return meeting_data
 
 
-class general(View):
+def makeRoomInfo(i_room):
+    room_data = {'room_id': i_room.id, 'name': i_room.name, 'location': i_room.location, 'type': i_room.type,
+                 'comment': i_room.comment, 'manager_id': i_room.manager_id, 'manager': i_room.manager.name}
+    return room_data
+
+
+class user_func(View):
     def test(request):
         """
         :comment:test gen method
@@ -68,14 +64,6 @@ class general(View):
                 else:
                     users = user.objects.all().order_by('-edittime')
                     for i_users in users:
-                        # user_data = {}
-                        # user_data['name'] = i_users.name
-                        # user_data['sex'] = i_users.sex
-                        # user_data['email'] = i_users.email
-                        # user_data['phone'] = i_users.phone
-                        # user_data['postion'] = i_users.position
-                        # user_data['add_time'] = i_users.addtime
-                        # user_data['edit_time'] = i_users.edittime
                         data['data'].append(makeUserInfo(i_users))
                     data['status'] = 210
             except:
@@ -293,7 +281,6 @@ class general(View):
                         data['user'] = makeUserInfo(user.objects.get(id=request.POST['uid']))
                         user_metting = user.objects.get(id=request.POST['uid']).person.all()
                         for i_meeting in user_metting:
-                            print(makeMeetingInfo(i_meeting))
                             data['data'].append(makeMeetingInfo(i_meeting))
                             data['info'] = 'success get user meeting'
                     except Exception as e:
@@ -305,6 +292,92 @@ class general(View):
             else:
                 data['status'] = 602
                 data['info'] = 'error param'
+        else:
+            data['status'] = 601
+            data['info'] = 'error method'
+
+        return JsonResponse(data, safe=False)
+
+
+class room_func(View):
+    def test(request):
+        return HttpResponse('this is room_func test')
+
+    def getAllRoom(request):
+        data = {
+            'status': 210,
+            'info': 'get all rooms',
+            'data': []
+        }
+        if request.method == 'POST':
+            if 'key' in request.POST.keys():
+                if request.POST['key'] in method_key:
+                    try:
+                        all_rooms = room.objects.all()
+
+                        for i_room in all_rooms:
+                            data['data'].append(makeRoomInfo(i_room))
+                        data['status'] = 210
+                        data['info'] = 'succeed return all rooms'
+                    except Exception as e:
+                        data['status'] = 604
+                        data['info'] = str(e)
+
+                else:
+                    data['status'] = 603
+                    data['info'] = 'error key'
+            else:
+                data['status'] = 602
+                data['info'] = 'error parma'
+        else:
+            data['status'] = 601
+            data['info'] = 'error method'
+
+        return JsonResponse(data, safe=False)
+
+    def searchRoom(requset):
+        """
+
+        :return:
+        """
+        data = {
+            'status': 210,
+            'info': 'search rooms',
+            'data': []
+        }
+        if requset.method == 'POST':
+            if 'key' in requset.POST.keys():
+                if requset.POST['key'] in method_key:
+                    post_data = requset.POST
+                    id = ''
+                    name = ''
+                    location = ''
+                    type = ''
+                    manager = ''
+                    if 'rid' in post_data.keys():
+                        id = post_data['rid']
+                    if 'name' in post_data.keys():
+                        name = post_data['name']
+                    if 'location' in post_data.keys():
+                        location = post_data['location']
+                    if 'type' in post_data.keys():
+                        type = post_data['type']
+                    if 'manager' in post_data.keys():
+                        manager = post_data['manager']
+
+                    """
+                    room_data = {'room_id': i_room.id, 'name': i_room.name, 'location': i_room.location,
+                                 'type': i_room.type,
+                                 'comment': i_room.comment, 'manager_id': i_room.manager_id,
+                                 'manager': i_room.manager.name}
+                    str =
+                    """
+                else:
+                    data['status'] = 603
+                    data['info'] = 'error key'
+            else:
+                data['status'] = 602
+                data['info'] = 'error parma'
         else:
             data['status'] = 601
             data['info'] = 'error method'

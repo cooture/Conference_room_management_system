@@ -1,12 +1,16 @@
 from django.urls import path
-from management.views import general
+from management.views import user_func, room_func
 
 urlpatterns = [
-    path('test/', general.test),
-    path('getallusers/', general.getAllUsers),
-    path('getsomeone/', general.getSomeone),
-    path('searchsomebody/', general.searchSomebody),
-    path('updateuser/', general.updateSomeone),
-    path('getusermeeting/', general.getUserMeeting)
+    path('test/', user_func.test),
+    path('getallusers/', user_func.getAllUsers),
+    path('getsomeone/', user_func.getSomeone),
+    path('searchsomebody/', user_func.searchSomebody),
+    path('updateuser/', user_func.updateSomeone),
+    path('getusermeeting/', user_func.getUserMeeting),
+
+    path('getallrooms/', room_func.getAllRoom),
+    path('searchrooms/', room_func.searchRoom)
+
 
 ]
