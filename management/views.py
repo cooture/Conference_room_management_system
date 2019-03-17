@@ -1,16 +1,318 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
+from django.views.generic import View
 
+from .models import user, meeting, room
 
 # Create your views here.
 
+method_key = ['1']
 
-class general:
+
+def makeUserInfo(i_users):
+    user_data = {}
+    user_data['name'] = i_users.name
+    user_data['sex'] = i_users.get_sex_display()
+    user_data['email'] = i_users.email
+    user_data['phone'] = i_users.phone
+    user_data['postion'] = i_users.position
+    user_data['add_time'] = i_users.addtime
+    user_data['edit_time'] = i_users.edittime
+    return user_data
+
+
+def makeMeetingInfo(i_meeting):
+    meeting_data = {}
+    meeting_data['theme'] = i_meeting.theme
+    meeting_data['comment'] = i_meeting.comment
+    meeting_data['start_time'] = i_meeting.starttime
+    meeting_data['end_time'] = i_meeting.endtime
+    meeting_data['creat_person'] = i_meeting.creat_person.name
+    meeting_data['creat_person_id'] = i_meeting.creat_person.id
+    meeting_data['room_name'] = i_meeting.room.name
+    meeting_data['room_name_id'] = i_meeting.room.id
+    return meeting_data
+
+
+class general(View):
     def test(request):
+        """
+        :comment:test gen method
+        :method:GET
+        :url:/gen/test
+        :return: HttpResponse
+        """
         return HttpResponse("This is gen test", status=202)
 
+    def getAllUsers(request):
+        """
+        :comment:get all users
+        :url:/gen/getallusers
+        :method:POST
+        :param:key
+        :return: json
+        :errcode_601: error key
+        :errcode_602: something error
+        :errcode_603: error method
+        """
+        data = {
+            "status": int,
+            "info": "all_users",
+            "data": [],
+        }
+        if request.method == 'POST':
+            try:
+                if request.POST['key'] not in method_key:
+                    data['status'] = 601
+                    data['info'] = "error key"
+                else:
+                    users = user.objects.all().order_by('-edittime')
+                    for i_users in users:
+                        # user_data = {}
+                        # user_data['name'] = i_users.name
+                        # user_data['sex'] = i_users.sex
+                        # user_data['email'] = i_users.email
+                        # user_data['phone'] = i_users.phone
+                        # user_data['postion'] = i_users.position
+                        # user_data['add_time'] = i_users.addtime
+                        # user_data['edit_time'] = i_users.edittime
+                        data['data'].append(makeUserInfo(i_users))
+                    data['status'] = 210
+            except:
+                data['status'] = 602
+                data['info'] = 'something error'
+        else:
+            data['status'] = 603
+            data['info'] = 'error method'
 
-class web:
+        return JsonResponse(data, safe=False)
+
+    def getSomeone(request):
+        """
+        :method:post
+        :param:key, sid
+        :url:/gen/getsomeone
+        :return: json
+        :errcode_601: 非法请求
+        :errcode_602: 参数错误
+        :errcode_603: 查无此人
+        :errcode_604: 访问key错误
+        """
+        data = {
+            'status': int,
+            'info': str,
+            'data': [],
+
+        }
+        if request.method == 'POST':
+            request_data = request.POST
+            try:
+                key = request_data['key']
+                sid = request_data['sid']
+                if key not in method_key:
+                    data['status'] = 604
+                    data['info'] = "error key"
+                else:
+                    try:
+                        someone = user.objects.get(id=sid)
+                        data['data'].append(makeUserInfo(someone))
+                        data['info'] = 'getSomeone info'
+                        data['status'] = 210
+                    except:
+                        data['info'] = 'cannot search someone'
+                        data['status'] = 603  # TODO:603查无此人
+
+
+            except:
+                data['status'] = 602  # TODO：602参数错误或无法解析参数
+                data['info'] = "error params"
+                data['data'].clear()
+
+        else:
+            data['status'] = 601
+            data['info'] = "error method"  # TODO：非法请求
+
+        return JsonResponse(data, safe=False, status=200)
+
+    def searchSomebody(request):
+        """
+
+        :url:/gen/searchsomebody/
+        :param:key, [name, sex, email, position, phone]at least one
+        :method:POST
+        :errcode_601: error method
+        :errcode_602: error key
+        :return:
+        """
+        data = {
+            'status': 210,
+            'info': "search somebody",
+            'data': [],
+        }
+        if request.method == 'POST':
+            if 'key' in request.POST.keys():
+                if request.POST['key'] not in method_key:
+                    data['status'] = 602
+                    data['info'] = 'error key'
+
+                else:
+                    post_data: dict
+                    post_data = request.POST
+                    name = ''
+                    sex = 0
+                    email = ''
+                    position = ''
+                    phone = ''
+
+                    if 'name' in post_data.keys():
+                        name = post_data['name']
+                        pass
+                    if 'sex' in post_data.keys():
+                        sex = int(post_data['sex'])
+                        pass
+                    if 'email' in post_data.keys():
+                        email = post_data['email']
+                        pass
+                    if 'position' in post_data.keys():
+                        position = post_data['position']
+                        pass
+                    if 'phone' in post_data.keys():
+                        phone = post_data['phone']
+                        pass
+
+                    try:
+                        somebody = user.objects.filter(name__contains=name, sex__gte=sex, email__contains=email,
+                                                       position__contains=position, phone__contains=phone)
+                        for i_somebody in somebody:
+                            data['data'].append(makeUserInfo(i_somebody))
+
+                        data['status'] = 210
+                        data['info'] = 'search somebody'
+                        pass
+                    except Exception as e:
+                        print(e)
+
+            else:
+                data['status'] = 602
+                data['info'] = 'error key'
+
+        else:
+            data['status'] = 601
+            data['info'] = "error method"
+
+        return JsonResponse(data, safe=False)
+
+    def updateSomeone(requsest):
+        """
+        :url:/updateuse/
+        :param: key, uid, [name, sex, email, position, phone]
+        :errcode_601:error method
+        :errcode_602:error param
+        :errcode_603:error key
+        :errcode_604:cannot find user
+        :errcode_605:update error
+        :return: json
+        """
+        data = {
+            'status': 210,
+            'info': 'update someone',
+            'data': []
+        }
+        if requsest.method == 'POST':
+            if 'key' and 'uid' in requsest.POST.keys():
+                if requsest.POST['key'] in method_key:
+                    post_data: dict
+                    post_data = requsest.POST
+                    try:
+                        get_user = user.objects.get(id=post_data['uid'])
+                        name = get_user.name
+                        sex = get_user.sex
+                        email = get_user.email
+                        position = get_user.position
+                        phone = get_user.phone
+                    except Exception as e:
+                        data['status'] = 604
+                        data['info'] = str(e)
+                        return JsonResponse(data, safe=False)
+
+                    if 'name' in post_data.keys():
+                        name = post_data['name']
+                        pass
+                    if 'sex' in post_data.keys():
+                        sex = int(post_data['sex'])
+                        pass
+                    if 'email' in post_data.keys():
+                        email = post_data['email']
+                        pass
+                    if 'position' in post_data.keys():
+                        position = post_data['position']
+                        pass
+                    if 'phone' in post_data.keys():
+                        phone = post_data['phone']
+                        pass
+
+                    try:
+                        user.objects.filter(id=post_data['uid']).update(name=name, sex=sex, email=email,
+                                                                        position=position, phone=phone)
+                        data['data'].append(makeUserInfo(user.objects.get(id=post_data['uid'])))
+                        data['info'] = "succeed update uid:" + str(post_data['uid'])
+                    except Exception as e:
+                        print(e)
+                        data['status'] = 605
+                        data['info'] = str(e)
+                else:
+                    data['status'] = 603
+                    data['info'] = 'error key'
+            else:
+                data['status'] = 602
+                data['info'] = "error param"
+            pass
+        else:
+            data['status'] = 601
+            data['info'] = 'error method'
+
+        return JsonResponse(data, safe=False)
+
+    def getUserMeeting(request):
+        """
+        :param:key,uid
+        :url:/getusermeeting/
+        :errcode_601: error method
+        :return:json
+        """
+        data = {
+            'status': 210,
+            'info': 'get user metting',
+            'user': {},
+            'data': []
+        }
+        if request.method == 'POST':
+            if 'key' and 'uid' in request.POST.keys():
+                if request.POST['key'] in method_key:
+                    try:
+                        data['user'] = makeUserInfo(user.objects.get(id=request.POST['uid']))
+                        user_metting = user.objects.get(id=request.POST['uid']).person.all()
+                        for i_meeting in user_metting:
+                            print(makeMeetingInfo(i_meeting))
+                            data['data'].append(makeMeetingInfo(i_meeting))
+                            data['info'] = 'success get user meeting'
+                    except Exception as e:
+                        data['status'] = 604
+                        data['info'] = str(e)
+                else:
+                    data['status'] = 603
+                    data['info'] = 'error key'
+            else:
+                data['status'] = 602
+                data['info'] = 'error param'
+        else:
+            data['status'] = 601
+            data['info'] = 'error method'
+
+        return JsonResponse(data, safe=False)
+
+
+class web(View):
     def test(requset):
         return HttpResponse("This is web test", status=202)
 
@@ -26,6 +328,6 @@ class web:
         return render(request, 'web/index.html')
 
 
-class android:
+class android(View):
     def test(request):
         return HttpResponse("this is android test", status=202)
